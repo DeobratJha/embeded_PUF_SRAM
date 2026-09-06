@@ -1,0 +1,13 @@
+/* File 6: main/wake_stub.c */
+// Empty file no longer needed
+
+//idf.py erase-flash
+
+
+//idf.py fullclean
+// idf.py build
+
+
+//idf.py -p COM3 flash monitor
+
+//cd NITK\Major_Project\esp32_sram_puf_V5_Complete\esp32_sram_puf

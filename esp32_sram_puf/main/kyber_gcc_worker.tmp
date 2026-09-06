@@ -1,0 +1,39 @@
+// ============================================================================
+// KYBER WORKER TASK FOR GCC (One-shot: processes CT and exits)
+// ============================================================================
+// This task receives Kyber CT from callback and does decapsulation
+// safely in task context (NOT ISR). Deletes itself after completion.
+void kyber_decaps_task(void *pvParameters) {
+    kyber_ct_item_t ct_item;
+    uint8_t local_ss[KYBER_SHAREDSECRET_BYTES];
+    
+    // Wait for CT from callback (with reasonable timeout)
+    if (xQueueReceive(kyber_ct_queue, &ct_item, pdMS_TO_TICKS(30000)) == pdTRUE) {
+        ESP_LOGI(TAG, "   📦 Worker task processing Kyber ciphertext...");
+        
+        // Decapsulate (HEAVY CRYPTO - safe in task context)
+        if (kyber_decaps(kyber_sk, ct_item.ciphertext, local_ss) == ESP_OK) {
+            ESP_LOGI(TAG, "Decapsulation successful!");
+            
+            // Derive session keys
+            kyber_derive_session_keys(local_ss, &session);
+            ESP_LOGI(TAG, "Session keys derived, secure channel ready!");
+            ESP_LOGI(TAG, "=====================================================");
+            ESP_LOGI(TAG, " ✅ Secure channel established with UAV!");
+            ESP_LOGI(TAG, "=====================================================");
+            
+            // Clear secrets
+            kyber_secure_memzero(kyber_sk, sizeof(kyber_sk));
+            kyber_secure_memzero(local_ss, sizeof(local_ss));
+        } else {
+            ESP_LOGE(TAG, "Decapsulation failed!");
+        }
+    } else {
+        ESP_LOGW(TAG, "   ⏱️ Kyber decaps task timed out waiting for CT");
+    }
+    
+    // One-shot task: delete self after completion
+    ESP_LOGI(TAG, "   🗑️ Kyber decaps task completed, deleting self");
+    vTaskDelete(NULL);
+}
+

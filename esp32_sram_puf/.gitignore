@@ -1,0 +1,14 @@
+﻿# build artifacts
+/esp32_sram_puf/build/
+build/
+*.bin
+*.elf
+*.map
+*.obj
+*.a
+*.o
+sdkconfig
+sdkconfig.old
+sdkconfig.defaults
+*.tmp
+.vscode/
